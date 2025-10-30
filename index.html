@@ -69,8 +69,8 @@
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
+    // ✅ いいねAPI（GASのURL）
     const likeApiUrl = 'https://script.google.com/macros/s/AKfycbzVMN5miGsawphhQSN6kyvRckXj3QJwhMXZHU_ij9FPpfiXS0KcugmkrqRttp6olY9k4g/exec';
-
 
     // ✅ CSVをパース
     function parseCSV(text) {
@@ -97,7 +97,7 @@
     }
 
     // ✅ Googleスプレッドシートから投稿データ取得
-    fetch('https://script.google.com/macros/s/AKfycbzVMN5miGsawphhQSN6kyvRckXj3QJwhMXZHU_ij9FPpfiXS0KcugmkrqRttp6olY9k4g/exec')
+    fetch(sheetUrl)
       .then(res => {
         if (!res.ok) throw new Error('ネットワークエラー');
         return res.text();
@@ -153,14 +153,10 @@
             const countSpan = document.getElementById(`like-count-${postId}`);
             countSpan.textContent = '...';
             try {
-             
-              
               const res = await fetch(`${likeApiUrl}?id=${postId}`, { mode: 'cors' });
-if (!res.ok) throw new Error('fetch失敗');
-const data = await res.json();
-countSpan.textContent = data.count ?? '0';
-
-             
+              if (!res.ok) throw new Error('fetch失敗');
+              const data = await res.json();
+              countSpan.textContent = data.count ?? '0';
             } catch (err) {
               console.error(err);
               countSpan.textContent = '⚠️';
