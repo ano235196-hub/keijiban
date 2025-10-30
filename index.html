@@ -3,36 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- ✅ Google サイト認証 -->
-  <meta name="google-site-verification" content="61fo7jboEh_yjqDy9wookQE0lFghsk4CQnk5VNTj1m0" />
-
-  <!-- ✅ タイトル（検索結果の青文字） -->
   <title>被験者募集掲示板｜大学研究・心理学実験への参加募集</title>
-
-  <!-- ✅ 検索結果に表示される説明文 -->
-  <meta name="description" content="大学などの研究・実験への参加者を募集する掲示板です。心理学実験、行動科学、認知研究などの被験者募集情報を掲載しています。研究参加の前にポリシーをご確認ください。" />
-
-  <!-- ✅ キーワード（補助的） -->
-  <meta name="keywords" content="被験者募集, 実験募集, 研究参加, 心理学実験, 行動科学, 大学生バイト, 実験モニター" />
-
-  <!-- ✅ OGP（SNSでのシェア表示） -->
-  <meta property="og:title" content="被験者募集掲示板｜研究・実験参加者募集サイト" />
-  <meta property="og:description" content="大学研究や心理学実験の被験者を募集しています。研究参加前にポリシーをご確認ください。" />
-  <meta property="og:url" content="https://hikennsya.github.io/-/index.html" />
-  <meta property="og:image" content="https://hikennsya.github.io/-/ogp.jpg" />
-  <meta property="og:type" content="website" />
-  <meta property="og:locale" content="ja_JP" />
-  <meta name="twitter:card" content="summary_large_image" />
-
-  <!-- ✅ favicon -->
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <!-- ✅ ヘッダー -->
   <header class="site-header">
     <nav class="navbar">
       <h1 class="logo"><a href="index.html">被験者募集掲示板</a></h1>
@@ -45,28 +20,10 @@
     </nav>
   </header>
 
-  <script>
-    // 現在ページを判定してナビを強調
-    const currentPage = window.location.pathname.split("/").pop();
-    document.querySelectorAll(".nav-links a").forEach(link => {
-      if (link.getAttribute("href") === currentPage) {
-        link.classList.add("active");
-      }
-    });
-  </script>
-
-  <!-- ✅ メイン -->
   <main class="container">
     <section class="intro-section">
       <h2>このサイトについて</h2>
-      <p>
-        このサイト「被験者募集掲示板」は、大学などの研究・実験への参加者を募集する目的で運営されています。<br>
-        研究参加の際はポリシーをご確認ください。
-      </p>
-      <p class="official-links">
-        <a href="https://x.com/hikennsya_keiji" target="_blank">X</a> ｜ 
-        <a href="https://www.threads.net/@hikennsya_keijiban" target="_blank">Threads</a>
-      </p>
+      <p>このサイト「被験者募集掲示板」は、大学などの研究・実験への参加者を募集する目的で運営されています。</p>
     </section>
 
     <section id="posts" class="post-list">
@@ -79,79 +36,63 @@
     © 被験者募集掲示板
   </footer>
 
-  <!-- ✅ Googleスプレッドシート連携 -->
   <script>
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwty1oe-6s7l6GPnMyo-nhQk2vDfnWKsdlzmgdGo1ey7g1QNLusXc_iIbAJYdE8RhLwRnLobvrBvDV/pub?gid=821609257&single=true&output=csv';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw7WfXuC9niKPoEVwdN4-YK8WU5a-ia5nB2wUeeW-GwobLUuCC_0lM1fL1x8SP2r9rs8w/exec';
 
     const postsContainer = document.getElementById('posts');
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
-    // ✅ CSVパーサー（カンマ・改行対応）
+    // ✅ CSVパース
     function parseCSV(text) {
       const rows = [];
-      let current = '';
-      let insideQuote = false;
-      let row = [];
-
+      let current = '', insideQuote = false, row = [];
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
         if (char === '"') {
-          if (text[i + 1] === '"') {
-            current += '"';
-            i++;
-          } else {
-            insideQuote = !insideQuote;
-          }
+          if (text[i + 1] === '"') { current += '"'; i++; }
+          else insideQuote = !insideQuote;
         } else if (char === ',' && !insideQuote) {
-          row.push(current);
-          current = '';
+          row.push(current); current = '';
         } else if ((char === '\n' || char === '\r') && !insideQuote) {
-          if (current || row.length) {
-            row.push(current);
-            rows.push(row);
-            row = [];
-            current = '';
-          }
-        } else {
-          current += char;
-        }
+          if (current || row.length) { row.push(current); rows.push(row); row = []; current = ''; }
+        } else current += char;
       }
       if (current || row.length) row.push(current);
       if (row.length) rows.push(row);
       return rows;
     }
 
-    // ✅ データ取得処理
+    // ✅ 投稿を取得
     fetch(sheetUrl)
-      .then(res => {
-        if (!res.ok) throw new Error('ネットワークエラー');
-        return res.text();
-      })
+      .then(res => res.ok ? res.text() : Promise.reject())
       .then(csvText => {
         loading.style.display = 'none';
-        const allRows = parseCSV(csvText);
-        const rows = allRows.slice(1);
-
+        const rows = parseCSV(csvText).slice(1).reverse();
         if (rows.length === 0) {
           postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
           return;
         }
 
-        rows.reverse().forEach((cols, index) => {
-          if (cols.length < 3) return;
-
+        rows.forEach((cols, index) => {
           const timestamp = cols[0].trim();
           const experimentName = cols[1].trim();
           const detailText = cols[2].trim().replace(/\r?\n/g, '<br>');
+          const postId = `post${index + 1}`;
 
           const postDiv = document.createElement('div');
           postDiv.className = 'post card';
           postDiv.innerHTML = `
             <div class="post-header">
-              <span class="post-number">#${rows.length - index}</span>
-              <span class="post-timestamp">${timestamp}</span>
-              <h2>${experimentName}</h2>
+              <div>
+                <span class="post-number">#${rows.length - index}</span>
+                <span class="post-timestamp">${timestamp}</span>
+                <h2>${experimentName}</h2>
+              </div>
+              <div class="like-container">
+                <button class="like-btn" id="like-${postId}">❤️ <span class="like-count" id="count-${postId}">0</span></button>
+              </div>
             </div>
             <div class="post-detail" style="display:none;">
               <p>${detailText}</p>
@@ -159,6 +100,7 @@
             <button class="toggle-btn">▼ 詳細を表示</button>
           `;
 
+          // 詳細の開閉
           const toggleBtn = postDiv.querySelector('.toggle-btn');
           const detail = postDiv.querySelector('.post-detail');
           toggleBtn.addEventListener('click', () => {
@@ -168,6 +110,9 @@
           });
 
           postsContainer.appendChild(postDiv);
+
+          // いいねボタン機能
+          setupLikeButton(postId);
         });
       })
       .catch(err => {
@@ -175,6 +120,36 @@
         loading.style.display = 'none';
         error.style.display = 'block';
       });
+
+    // ✅ 各投稿ごとのいいね機能
+    function setupLikeButton(postId) {
+      const likeBtn = document.getElementById(`like-${postId}`);
+      const likeCount = document.getElementById(`count-${postId}`);
+      const key = `liked_${postId}`;
+
+      // 現在のカウント取得
+      fetch(`${scriptURL}?action=get&id=${postId}`)
+        .then(res => res.json())
+        .then(data => likeCount.textContent = data.count ?? 0);
+
+      likeBtn.addEventListener('click', () => {
+        if (localStorage.getItem(key)) {
+          alert("この投稿にはすでに「いいね」しました。");
+          return;
+        }
+        fetch(scriptURL, {
+          method: "POST",
+          body: JSON.stringify({ action: "add", id: postId }),
+          headers: { "Content-Type": "application/json" }
+        })
+        .then(res => res.json())
+        .then(data => {
+          likeCount.textContent = data.count ?? 0;
+          likeBtn.classList.add("active");
+          localStorage.setItem(key, "true");
+        });
+      });
+    }
   </script>
 </body>
 </html>
