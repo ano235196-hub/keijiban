@@ -35,6 +35,67 @@
   <footer class="footer">
     © 被験者募集掲示板
   </footer>
+<!-- ✅ Google Apps Script いいねボタン -->
+<script>
+  const likeScriptURL = "https://script.google.com/macros/s/AKfycbw7WfXuC9niKPoEVwdN4-YK8WU5a-ia5nB2wUeeW-GwobLUuCC_0lM1fL1x8SP2r9rs8w/exec";
+
+  // いいねボタンを生成する関数
+  function createLikeButton(container) {
+    const likeBox = document.createElement("div");
+    likeBox.className = "like-box";
+
+    likeBox.innerHTML = `
+      <button id="like-btn" class="like-btn">❤️ <span id="like-count">0</span></button>
+    `;
+    container.appendChild(likeBox);
+
+    const likeBtn = likeBox.querySelector("#like-btn");
+    const likeCount = likeBox.querySelector("#like-count");
+
+    // 初期値を取得（D2の値）
+    fetch(likeScriptURL + "?action=get")
+      .then(res => res.json())
+      .then(data => {
+        likeCount.textContent = data.count ?? 0;
+      });
+
+    // 押した履歴（1回制限）
+    const key = "liked_global_button";
+
+    likeBtn.addEventListener("click", () => {
+      if (localStorage.getItem(key)) {
+        alert("この投稿にはすでに「いいね」しました。");
+        return;
+      }
+
+      fetch(likeScriptURL, {
+        method: "POST",
+        body: JSON.stringify({ action: "add" }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        likeCount.textContent = data.count ?? 0;
+        localStorage.setItem(key, "true");
+        likeBtn.classList.add("active");
+      })
+      .catch(err => console.error(err));
+    });
+  }
+
+  // ✅ ページ内のタイトル要素を監視して右下に設置
+  const observer = new MutationObserver(() => {
+    const firstPostTitle = document.querySelector(".post-header h2");
+    if (firstPostTitle && !document.querySelector(".like-box")) {
+      const container = document.createElement("div");
+      container.className = "like-container";
+      firstPostTitle.parentNode.appendChild(container);
+      createLikeButton(container);
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+</script>
 
   <script>
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwty1oe-6s7l6GPnMyo-nhQk2vDfnWKsdlzmgdGo1ey7g1QNLusXc_iIbAJYdE8RhLwRnLobvrBvDV/pub?gid=821609257&single=true&output=csv';
