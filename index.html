@@ -153,9 +153,14 @@
             const countSpan = document.getElementById(`like-count-${postId}`);
             countSpan.textContent = '...';
             try {
-              const res = await fetch(`${likeApiUrl}?id=${postId}`);
-              const data = await res.json();
-              countSpan.textContent = data.count ?? '0';
+             
+              
+              const res = await fetch(`${likeApiUrl}?id=${postId}`, { mode: 'cors' });
+if (!res.ok) throw new Error('fetch失敗');
+const data = await res.json();
+countSpan.textContent = data.count ?? '0';
+
+             
             } catch (err) {
               console.error(err);
               countSpan.textContent = '⚠️';
