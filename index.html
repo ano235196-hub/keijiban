@@ -2,19 +2,12 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ✅ Google サイト認証 -->
   <meta name="google-site-verification" content="61fo7jboEh_yjqDy9wookQE0lFghsk4CQnk5VNTj1m0" />
-
-  <!-- ✅ タイトル -->
   <title>被験者募集掲示板｜大学研究・心理学実験への参加募集</title>
-
-  <!-- ✅ meta情報 -->
   <meta name="description" content="大学などの研究・実験への参加者を募集する掲示板です。心理学実験、行動科学、認知研究などの被験者募集情報を掲載しています。研究参加の前にポリシーをご確認ください。" />
   <meta name="keywords" content="被験者募集, 実験募集, 研究参加, 心理学実験, 行動科学, 大学生バイト, 実験モニター" />
-
-  <!-- ✅ OGP -->
   <meta property="og:title" content="被験者募集掲示板｜研究・実験参加者募集サイト" />
   <meta property="og:description" content="大学研究や心理学実験の被験者を募集しています。研究参加前にポリシーをご確認ください。" />
   <meta property="og:url" content="https://hikennsya.github.io/-/index.html" />
@@ -22,15 +15,11 @@
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="ja_JP" />
   <meta name="twitter:card" content="summary_large_image" />
-
-  <!-- ✅ favicon -->
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <!-- ✅ ヘッダー -->
   <header class="site-header">
     <nav class="navbar">
       <h1 class="logo"><a href="index.html">被験者募集掲示板</a></h1>
@@ -53,7 +42,6 @@
     });
   </script>
 
-  <!-- ✅ メイン -->
   <main class="container">
     <section class="intro-section">
       <h2>このサイトについて</h2>
@@ -73,18 +61,15 @@
     </section>
   </main>
 
-  <footer class="footer">
-    © 被験者募集掲示板
-  </footer>
+  <footer class="footer">© 被験者募集掲示板</footer>
 
-  <!-- ✅ 投稿データ＋いいね連携 -->
+  <!-- ✅ Google Apps Script (GAS) 連携 -->
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz8yfGG9FmkJvm0RDS1AT4uFnTtgpP1OWBEI_AnIGTtdXTLpePPbsHt-a8NbvjND_7V1A/exec";
     const postsContainer = document.getElementById('posts');
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
-    // ✅ データ取得（JSON）
     fetch(GAS_URL)
       .then(res => res.json())
       .then(rows => {
@@ -94,11 +79,9 @@
           return;
         }
 
-        // 最新が上に来るように反転
         rows.reverse().forEach((item, index) => {
           const postDiv = document.createElement('div');
           postDiv.className = 'post card';
-
           const likedKey = `liked_${item.id}`;
           const liked = localStorage.getItem(likedKey);
 
@@ -108,11 +91,9 @@
               <span class="post-timestamp">${item.timestamp}</span>
               <h2>${item.title}</h2>
             </div>
-
             <div class="post-detail" style="display:none;">
               <p>${item.detail.replace(/\r?\n/g, '<br>')}</p>
             </div>
-
             <button class="toggle-btn">▼ 詳細を表示</button>
 
             <div class="like-area" style="margin-top:10px;">
@@ -122,7 +103,7 @@
             </div>
           `;
 
-          // ✅ 詳細開閉処理
+          // ✅ 詳細開閉
           const toggleBtn = postDiv.querySelector('.toggle-btn');
           const detail = postDiv.querySelector('.post-detail');
           toggleBtn.addEventListener('click', () => {
@@ -131,10 +112,9 @@
             toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
           });
 
-          // ✅ いいねボタン処理
+          // ✅ いいねボタン
           const likeBtn = postDiv.querySelector('.like-btn');
           const likeCountEl = postDiv.querySelector('.like-count');
-
           likeBtn.addEventListener('click', () => {
             const id = likeBtn.dataset.id;
             fetch(`${GAS_URL}?id=${id}`, { method: "POST" })
@@ -143,15 +123,14 @@
                 likeCountEl.textContent = data.count;
                 likeBtn.disabled = true;
                 localStorage.setItem(likedKey, "true");
-              })
-              .catch(err => console.error("いいね送信エラー:", err));
+              });
           });
 
           postsContainer.appendChild(postDiv);
         });
       })
       .catch(err => {
-        console.error('読み込みエラー:', err);
+        console.error('データ読み込みエラー:', err);
         loading.style.display = 'none';
         error.style.display = 'block';
       });
