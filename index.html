@@ -70,93 +70,105 @@ const postsContainer = document.getElementById('posts');
 const loading = document.getElementById('loading');
 const error = document.getElementById('error');
 
-// 投稿一覧を取得して表示
-function loadPosts() {
-  fetch(GAS_URL)
-    .then(res => res.json())
-    .then(rows => {
-      loading.style.display = 'none';
-      postsContainer.innerHTML = '';
+// 投稿一覧取得
+async function loadPosts() {
+  try {
+    const res = await fetch(GAS_URL);
+    const rows = await res.json();
+    loading.style.display = 'none';
+    postsContainer.innerHTML = '';
 
-      if (rows.length === 0) {
-        postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
-        return;
-      }
+    if (!rows.length) {
+      postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
+      return;
+    }
 
-      rows.reverse().forEach((item, index) => {
-        const postDiv = document.createElement('div');
-        postDiv.className = 'post card';
-        const likedKey = `liked_${item.id}`;
-        const liked = localStorage.getItem(likedKey);
+    rows.reverse().forEach((item, index) => {
+      const postDiv = document.createElement('div');
+      postDiv.className = 'post card';
+      const likedKey = `liked_${item.id}`;
+      const liked = localStorage.getItem(likedKey);
 
-        postDiv.innerHTML = `
-          <div class="post-header">
-            <span class="post-number">#${rows.length - index}</span>
-            <span class="post-timestamp">${item.timestamp}</span>
-            <h2>${item.title}</h2>
-          </div>
-          <div class="post-detail" style="display:none;">
-            <p>${item.detail.replace(/\r?\n/g, '<br>')}</p>
-          </div>
-          <button class="toggle-btn">▼ 詳細を表示</button>
+      postDiv.innerHTML = `
+        <div class="post-header">
+          <span class="post-number">#${rows.length - index}</span>
+          <span class="post-timestamp">${item.timestamp}</span>
+          <h2>${item.title}</h2>
+        </div>
+        <div class="post-detail" style="display:none;">
+          <p>${item.detail.replace(/\r?\n/g,'<br>')}</p>
+        </div>
+        <button class="toggle-btn">▼ 詳細を表示</button>
+        <div class="like-area" style="margin-top:10px;">
+          <button class="like-btn" data-id="${item.id}">
+            👍 いいね (<span class="like-count">${item.likes}</span>)
+          </button>
+          <span class="like-msg" style="margin-left:8px;color:red;"></span>
+        </div>
+      `;
 
-          <div class="like-area" style="margin-top:10px;">
-            <button class="like-btn" data-id="${item.id}" ${liked ? 'disabled' : ''}>
-              👍 いいね (<span class="like-count">${item.likes}</span>)
-            </button>
-          </div>
-        `;
-
-        // 詳細開閉
-        const toggleBtn = postDiv.querySelector('.toggle-btn');
-        const detail = postDiv.querySelector('.post-detail');
-        toggleBtn.addEventListener('click', () => {
-          const isVisible = detail.style.display === 'block';
-          detail.style.display = isVisible ? 'none' : 'block';
-          toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
-        });
-
-        // いいねボタン
-        const likeBtn = postDiv.querySelector('.like-btn');
-        const likeCountEl = postDiv.querySelector('.like-count');
-        likeBtn.addEventListener('click', () => {
-          const id = likeBtn.dataset.id;
-          fetch(`${GAS_URL}?id=${id}`, { method: "POST" })
-            .then(res => res.json())
-            .then(data => {
-              likeCountEl.textContent = data.count;
-              likeBtn.disabled = true;
-              localStorage.setItem(likedKey, "true");
-            });
-        });
-
-        postsContainer.appendChild(postDiv);
+      // 詳細開閉
+      const toggleBtn = postDiv.querySelector('.toggle-btn');
+      const detail = postDiv.querySelector('.post-detail');
+      toggleBtn.addEventListener('click', () => {
+        const isVisible = detail.style.display === 'block';
+        detail.style.display = isVisible ? 'none' : 'block';
+        toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
       });
-    })
-    .catch(err => {
-      console.error('データ読み込みエラー:', err);
-      loading.style.display = 'none';
-      error.style.display = 'block';
+
+      // いいねボタン
+      const likeBtn = postDiv.querySelector('.like-btn');
+      const likeCountEl = postDiv.querySelector('.like-count');
+      const likeMsgEl = postDiv.querySelector('.like-msg');
+
+      if(liked) likeBtn.disabled = true;
+
+      likeBtn.addEventListener('click', async () => {
+        if(localStorage.getItem(likedKey)) {
+          likeMsgEl.textContent = "すでに押しています";
+          return;
+        }
+
+        likeBtn.disabled = true;
+        likeMsgEl.textContent = "";
+
+        try {
+          const res = await fetch(`${GAS_URL}?id=${item.id}`, { method: "POST" });
+          const data = await res.json();
+          likeCountEl.textContent = data.count;
+          localStorage.setItem(likedKey,"true");
+        } catch(e){
+          console.error("いいねエラー", e);
+          likeBtn.disabled = false;
+        }
+      });
+
+      postsContainer.appendChild(postDiv);
     });
+
+  } catch(err) {
+    console.error("読み込みエラー", err);
+    loading.style.display = 'none';
+    error.style.display = 'block';
+  }
 }
 
-// ✅ 初回読み込み
+// 初回読み込み
 loadPosts();
 
-// ✅ 30秒ごとにリアルタイム更新
-setInterval(() => {
-  document.querySelectorAll(".like-count").forEach(el => el.textContent = "...");
-  fetch(GAS_URL)
-    .then(res => res.json())
-    .then(rows => {
-      rows.forEach(item => {
-        const likeCountEl = document.querySelector(`.like-btn[data-id="${item.id}"] .like-count`);
-        if (likeCountEl) likeCountEl.textContent = item.likes;
-      });
-    })
-    .catch(err => console.warn("リアルタイム更新エラー:", err));
-}, 1000); // ← 30秒ごとに更新
+// リアルタイム更新（30秒ごと）
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL);
+    const rows = await res.json();
+    rows.forEach(item => {
+      const likeCountEl = document.querySelector(`.like-btn[data-id="${item.id}"] .like-count`);
+      if(likeCountEl) likeCountEl.textContent = item.likes;
+    });
+  } catch(e) {
+    console.warn("リアルタイム更新エラー", e);
+  }
+}, 30000);
 </script>
-
 </body>
 </html>
