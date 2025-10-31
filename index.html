@@ -64,76 +64,99 @@
   <footer class="footer">© 被験者募集掲示板</footer>
 
   <!-- ✅ Google Apps Script (GAS) 連携 -->
-  <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz8yfGG9FmkJvm0RDS1AT4uFnTtgpP1OWBEI_AnIGTtdXTLpePPbsHt-a8NbvjND_7V1A/exec";
-    const postsContainer = document.getElementById('posts');
-    const loading = document.getElementById('loading');
-    const error = document.getElementById('error');
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz8yfGG9FmkJvm0RDS1AT4uFnTtgpP1OWBEI_AnIGTtdXTLpePPbsHt-a8NbvjND_7V1A/exec";
+const postsContainer = document.getElementById('posts');
+const loading = document.getElementById('loading');
+const error = document.getElementById('error');
 
-    fetch(GAS_URL)
-      .then(res => res.json())
-      .then(rows => {
-        loading.style.display = 'none';
-        if (rows.length === 0) {
-          postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
-          return;
-        }
+// 投稿一覧を取得して表示
+function loadPosts() {
+  fetch(GAS_URL)
+    .then(res => res.json())
+    .then(rows => {
+      loading.style.display = 'none';
+      postsContainer.innerHTML = '';
 
-        rows.reverse().forEach((item, index) => {
-          const postDiv = document.createElement('div');
-          postDiv.className = 'post card';
-          const likedKey = `liked_${item.id}`;
-          const liked = localStorage.getItem(likedKey);
+      if (rows.length === 0) {
+        postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
+        return;
+      }
 
-          postDiv.innerHTML = `
-            <div class="post-header">
-              <span class="post-number">#${rows.length - index}</span>
-              <span class="post-timestamp">${item.timestamp}</span>
-              <h2>${item.title}</h2>
-            </div>
-            <div class="post-detail" style="display:none;">
-              <p>${item.detail.replace(/\r?\n/g, '<br>')}</p>
-            </div>
-            <button class="toggle-btn">▼ 詳細を表示</button>
+      rows.reverse().forEach((item, index) => {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post card';
+        const likedKey = `liked_${item.id}`;
+        const liked = localStorage.getItem(likedKey);
 
-            <div class="like-area" style="margin-top:10px;">
-              <button class="like-btn" data-id="${item.id}" ${liked ? 'disabled' : ''}>
-                👍 いいね (<span class="like-count">${item.likes}</span>)
-              </button>
-            </div>
-          `;
+        postDiv.innerHTML = `
+          <div class="post-header">
+            <span class="post-number">#${rows.length - index}</span>
+            <span class="post-timestamp">${item.timestamp}</span>
+            <h2>${item.title}</h2>
+          </div>
+          <div class="post-detail" style="display:none;">
+            <p>${item.detail.replace(/\r?\n/g, '<br>')}</p>
+          </div>
+          <button class="toggle-btn">▼ 詳細を表示</button>
 
-          // ✅ 詳細開閉
-          const toggleBtn = postDiv.querySelector('.toggle-btn');
-          const detail = postDiv.querySelector('.post-detail');
-          toggleBtn.addEventListener('click', () => {
-            const isVisible = detail.style.display === 'block';
-            detail.style.display = isVisible ? 'none' : 'block';
-            toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
-          });
+          <div class="like-area" style="margin-top:10px;">
+            <button class="like-btn" data-id="${item.id}" ${liked ? 'disabled' : ''}>
+              👍 いいね (<span class="like-count">${item.likes}</span>)
+            </button>
+          </div>
+        `;
 
-          // ✅ いいねボタン
-          const likeBtn = postDiv.querySelector('.like-btn');
-          const likeCountEl = postDiv.querySelector('.like-count');
-          likeBtn.addEventListener('click', () => {
-            const id = likeBtn.dataset.id;
-            fetch(`${GAS_URL}?id=${id}`, { method: "POST" })
-              .then(res => res.json())
-              .then(data => {
-                likeCountEl.textContent = data.count;
-                likeBtn.disabled = true;
-                localStorage.setItem(likedKey, "true");
-              });
-          });
-
-          postsContainer.appendChild(postDiv);
+        // 詳細開閉
+        const toggleBtn = postDiv.querySelector('.toggle-btn');
+        const detail = postDiv.querySelector('.post-detail');
+        toggleBtn.addEventListener('click', () => {
+          const isVisible = detail.style.display === 'block';
+          detail.style.display = isVisible ? 'none' : 'block';
+          toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
         });
-      })
-      .catch(err => {
-        console.error('データ読み込みエラー:', err);
-        loading.style.display = 'none';
-        error.style.display = 'block';
+
+        // いいねボタン
+        const likeBtn = postDiv.querySelector('.like-btn');
+        const likeCountEl = postDiv.querySelector('.like-count');
+        likeBtn.addEventListener('click', () => {
+          const id = likeBtn.dataset.id;
+          fetch(`${GAS_URL}?id=${id}`, { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+              likeCountEl.textContent = data.count;
+              likeBtn.disabled = true;
+              localStorage.setItem(likedKey, "true");
+            });
+        });
+
+        postsContainer.appendChild(postDiv);
       });
-  </script>
+    })
+    .catch(err => {
+      console.error('データ読み込みエラー:', err);
+      loading.style.display = 'none';
+      error.style.display = 'block';
+    });
+}
+
+// ✅ 初回読み込み
+loadPosts();
+
+// ✅ 30秒ごとにリアルタイム更新
+setInterval(() => {
+  document.querySelectorAll(".like-count").forEach(el => el.textContent = "...");
+  fetch(GAS_URL)
+    .then(res => res.json())
+    .then(rows => {
+      rows.forEach(item => {
+        const likeCountEl = document.querySelector(`.like-btn[data-id="${item.id}"] .like-count`);
+        if (likeCountEl) likeCountEl.textContent = item.likes;
+      });
+    })
+    .catch(err => console.warn("リアルタイム更新エラー:", err));
+}, 30000); // ← 30秒ごとに更新
+</script>
+
 </body>
 </html>
