@@ -1,0 +1,482 @@
+// --- 設定 ---
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRwty1oe-6s7l6GPnMyo-nhQk2vDfnWKsdlzmgdGo1ey7g1QNLusXc_iIbAJYdE8RhLwRnLobvrBvDV/pub?gid=821609257&single=true&output=csv';
+const CONTACT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSexVAhliA-a_VG2fiyEZZUGmuBVKxXgtmdIdciqKai-Ki0ssg/viewform?usp=dialog'; 
+const RECRUIT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe9ct1JVa42u4tWHIqFQJegyq1s2b2rjiSpc84EBqq65QkLug/viewform'; 
+
+// --- ステート管理 ---
+let currentLang = 'jp';
+let allPosts = [];
+let sortOrder = 'newest';
+let searchQuery = '';
+
+// --- 多言語辞書 ---
+const i18n = {
+    jp: {
+        siteName: "実験参加者募集",home: "ホーム", policy: "ポリシー", recruit: "掲載", contact: "お問い合わせ", faq: "よくある質問",
+        title: "実験参加者募集", subtitle: "大学研究・心理学実験への参加募集",
+        aboutTitle: "当サイトについて", aboutText: "大学の研究実験やアンケートの協力者を募集する掲示板です。",
+        recruitHint: "※掲載は最短1分で完了。",
+        emptyMsg: "現在、新しい募集を準備中です...", emptyAction: "最初の募集を掲載しませんか？",
+        countSuffix: "件の募集", sortNew: "新着順", sortOld: "古い順",
+        heroEyebrow: "University Research Bulletin",
+        heroTitle: "大学の研究参加を、もっと見つけやすく。",
+        heroText: "研究実験・アンケート・卒業研究の参加募集を、見やすく安心して探せる掲示板です。",
+        searchPlaceholder: "実験名やキーワードで探す",
+        statPosts: "掲載中の募集",
+        statFree: "掲載料金",
+        statFast: "掲載目安",
+        freeLabel: "無料",
+        fastLabel: "最短1分",
+        latestLabel: "更新順",
+        more: "詳細を見る", close: "閉じる", back: "← 前のページに戻る",
+        langBtn: "English",
+        recruitHero: "実験参加者を募集しませんか？", recruitSub: "研究・実験の参加者募集を無料で掲載できます。",
+        recruitBtn: "掲載フォームへ", contactTitle: "お問い合わせ",
+        contactText: "ご質問・ご相談がありましたら、以下のフォームからご連絡ください。",
+        contactBtn: "お問い合わせフォームへ"
+    },
+    en: {
+        siteName: "Experiment Recruitment",home: "Home", policy: "Policy", recruit: "Post", contact: "Contact", faq: "FAQ",
+        title: "Experiment Recruitment", subtitle: "Recruiting participants for university research",
+        aboutTitle: "About Us", aboutText: "A bulletin board for recruiting participants for university experiments and surveys.",
+        recruitHint: "*Posting takes as little as 1 minute. ",
+        emptyMsg: "Preparing for new recruitments...", emptyAction: "Be the first to post a recruitment!",
+        countSuffix: " posts", sortNew: "Newest", sortOld: "Oldest",
+        heroEyebrow: "University Research Bulletin",
+        heroTitle: "A clearer place to find research participation opportunities.",
+        heroText: "Browse university studies, surveys, and thesis projects in a format that is simple, calm, and easy to trust.",
+        searchPlaceholder: "Search by title or keyword",
+        statPosts: "Active posts",
+        statFree: "Posting fee",
+        statFast: "Posting time",
+        freeLabel: "Free",
+        fastLabel: "About 1 min",
+        latestLabel: "Latest first",
+        more: "View Details", close: "Close", back: "← Back",
+        langBtn: "日本語",
+        recruitHero: "Want to recruit participants?", recruitSub: "You can post your research or experiment for free.",
+        recruitBtn: "Go to Post Form", contactTitle: "Contact Us",
+        contactText: "If you have any questions or requests, please contact us via the form below.",
+        contactBtn: "Go to Contact Form"
+    }
+};
+
+function getRoutes() {
+    const t = i18n[currentLang];
+    return {
+        '': { label: t.home, icon: 'home', render: renderHome },
+        '#faq': { label: t.faq, icon: 'help-circle', render: renderFaq },
+        '#policy': { label: t.policy, icon: 'shield-check', render: renderPolicy },
+        '#recruit': { label: t.recruit, icon: 'pen-tool', render: renderRecruit },
+        '#contact': { label: t.contact, icon: 'mail', render: renderContact },
+    };
+}
+
+// --- DOM要素 ---
+const els = {
+    main: document.getElementById('main-content'),
+    desktopNav: document.getElementById('desktop-nav'),
+    mobileNav: document.getElementById('mobile-nav'),
+    mobileNavLinks: document.getElementById('mobile-nav-links'),
+    mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+    year: document.getElementById('year'),
+};
+
+// --- 初期化 ---
+document.addEventListener('DOMContentLoaded', () => {
+    els.year.textContent = new Date().getFullYear();
+    setupNavigation();
+    fetchData().then(() => handleRoute());
+    window.addEventListener('hashchange', handleRoute);
+});
+
+function setupNavigation() {
+    const routes = getRoutes();
+    const navItems = Object.entries(routes).map(([hash, route]) => ({ hash, ...route }));
+    const t = i18n[currentLang];
+
+    els.desktopNav.innerHTML = navItems.map(item => `
+        <a href="${item.hash || '#'}" class="nav-item px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-accent hover:bg-blue-50 transition-all flex items-center gap-2" data-hash="${item.hash}">
+            <i data-lucide="${item.icon}" class="w-4 h-4"></i> ${item.label}
+        </a>
+    `).join('') + `
+        <button id="lang-toggle-pc" class="ml-4 px-3 py-1 border border-accent text-accent rounded-full text-xs font-bold hover:bg-blue-50 transition-all">${t.langBtn}</button>
+    `;
+
+    els.mobileNavLinks.innerHTML = navItems.map(item => `
+        <a href="${item.hash || '#'}" class="nav-item block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-accent hover:bg-gray-50 flex items-center gap-3" data-hash="${item.hash}">
+            <i data-lucide="${item.icon}" class="w-5 h-5"></i> ${item.label}
+        </a>
+    `).join('') + `
+        <div class="px-3 py-2 border-t border-gray-100 mt-2">
+            <button id="lang-toggle-mobile" class="w-full py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-bold">${t.langBtn}</button>
+        </div>
+    `;
+
+    const toggleLang = () => {
+        currentLang = currentLang === 'jp' ? 'en' : 'jp';
+        setupNavigation();
+        handleRoute();
+    };
+
+    document.getElementById('lang-toggle-pc')?.addEventListener('click', toggleLang);
+    document.getElementById('lang-toggle-mobile')?.addEventListener('click', toggleLang);
+
+    els.mobileMenuBtn.onclick = (e) => {
+        e.stopPropagation();
+        const isHidden = els.mobileNav.classList.toggle('hidden');
+        els.mobileMenuBtn.innerHTML = `<i data-lucide="${isHidden ? 'menu' : 'x'}" class="w-6 h-6 text-gray-600"></i>`;
+        lucide.createIcons();
+    };
+    lucide.createIcons();
+}
+
+function handleRoute() {
+    const hash = window.location.hash;
+    const routes = getRoutes();
+    const route = routes[hash] || routes['']; 
+
+    // ナビのアクティブ表示更新
+    document.querySelectorAll('.nav-item').forEach(link => {
+        const isMatch = link.dataset.hash === (hash || '');
+        link.classList.toggle('text-accent', isMatch);
+        link.classList.toggle('bg-blue-50', isMatch);
+    });
+
+    els.mobileNav.classList.add('hidden');
+    els.main.innerHTML = route.render();
+    lucide.createIcons();
+    window.scrollTo(0, 0);
+
+    if (!hash || hash === '#') attachHomeEvents();
+}
+
+async function fetchData() {
+    try {
+        const res = await fetch(SHEET_URL);
+        const csvText = await res.text();
+        allPosts = parseCSV(csvText);
+    } catch (err) {
+        els.main.innerHTML = `<div class="bg-red-50 text-red-600 p-4 rounded-lg text-center">Failed to load data.</div>`;
+    }
+}
+
+function parseCSV(text) {
+    const rows = [];
+    let currentRow = [], currentVal = '', insideQuote = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i], nextChar = text[i+1];
+        if (char === '"') {
+            if (insideQuote && nextChar === '"') { currentVal += '"'; i++; }
+            else { insideQuote = !insideQuote; }
+        } else if (char === ',' && !insideQuote) {
+            currentRow.push(currentVal); currentVal = '';
+        } else if ((char === '\n' || char === '\r') && !insideQuote) {
+            if (char === '\r' && nextChar === '\n') i++;
+            if (currentRow.length) rows.push(currentRow);
+            currentRow = []; currentVal = '';
+        } else { currentVal += char; }
+    }
+    if (currentRow.length) rows.push(currentRow);
+    return rows.slice(1).filter(r => r.length >= 3).map((r, i) => ({ id: i, timestamp: r[0].trim(), title: r[1].trim(), details: r[2].trim() }));
+}
+
+// --- 各ページ描画関数 ---
+
+function renderHome() {
+    const t = i18n[currentLang];
+    const sorted = [...allPosts].sort((a, b) => sortOrder === 'newest' ? b.id - a.id : a.id - b.id);
+    const filtered = sorted.filter(post => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.trim().toLowerCase();
+        return `${post.title} ${post.details} ${post.timestamp}`.toLowerCase().includes(q);
+    });
+
+    if (!allPosts.length) {
+        return `<div class="text-center py-20"><div class="bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-10 max-w-md mx-auto"><i data-lucide="search" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i><p class="text-gray-500 mb-4">${t.emptyMsg}</p><a href="#recruit" class="text-accent font-bold hover:underline">${t.emptyAction}</a></div></div>`;
+    }
+
+    const cardsHtml = filtered.map((post, idx) => {
+        const displayNum = sortOrder === 'newest' ? allPosts.length - post.id : post.id + 1;
+        const preview = post.details.length > 120 ? `${post.details.slice(0, 120)}...` : post.details;
+        return `
+        <article class="post-card board-card glass-panel bg-white/90 rounded-3xl border border-white/80 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div class="post-trigger p-6 cursor-pointer select-none">
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="space-y-3">
+                        <span class="inline-flex items-center gap-2 bg-blue-50 text-accent text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">#${displayNum}</span>
+                        <h3 class="text-xl font-bold text-primary leading-snug group-hover:text-accent transition-colors">${post.title}</h3>
+                    </div>
+                    <span class="shrink-0 text-xs text-slate-400 flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-full border border-slate-100"><i data-lucide="clock-3" class="w-3.5 h-3.5"></i>${post.timestamp}</span>
+                </div>
+                <p class="text-sm text-slate-500 leading-7">${preview || '&nbsp;'}</p>
+                <div class="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
+                    <span class="text-sm font-semibold text-accent flex items-center gap-2 toggle-label"><i data-lucide="sparkles" class="w-4 h-4"></i>${t.more}</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-300 transition-transform duration-300 chevron-icon"></i>
+                </div>
+            </div>
+            <div class="post-detail max-h-0 overflow-hidden bg-slate-50/80 border-t border-slate-100">
+                <div class="p-6 text-sm text-slate-700 leading-8 whitespace-pre-wrap">${post.details}</div>
+            </div>
+        </article>`;
+    }).join('');
+
+    const emptySearchState = `
+        <div class="board-card glass-panel rounded-3xl border border-white/80 p-10 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-blue-50 text-accent mx-auto mb-4 flex items-center justify-center">
+                <i data-lucide="search-x" class="w-8 h-8"></i>
+            </div>
+            <p class="text-lg font-bold text-primary mb-2">${currentLang === 'jp' ? '条件に合う募集が見つかりませんでした' : 'No matching posts found'}</p>
+            <p class="text-sm text-slate-500">${currentLang === 'jp' ? '検索語を変えるか、並び順を変えてみてください。' : 'Try a different keyword or change the sort order.'}</p>
+        </div>
+    `;
+
+    return `
+        <div class="space-y-8">
+            <section class="hero-card relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 text-white p-8 sm:p-10 shadow-2xl">
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(96,165,250,0.34),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(59,130,246,0.22),_transparent_30%)]"></div>
+                <div class="relative grid gap-8 lg:grid-cols-[1.3fr_0.8fr] lg:items-end">
+                    <div class="space-y-5">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold tracking-[0.2em] uppercase text-blue-100">
+                            <i data-lucide="badge-info" class="w-4 h-4"></i>${t.heroEyebrow}
+                        </span>
+                        <div class="space-y-3">
+                            <h1 class="text-3xl sm:text-4xl font-black leading-tight tracking-tight">${t.heroTitle}</h1>
+                            <p class="max-w-2xl text-sm sm:text-base text-blue-50/85 leading-7">${t.heroText}</p>
+                        </div>
+                        <div class="search-field flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-slate-700 shadow-lg shadow-slate-950/10">
+                            <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                            <input id="search-input" type="text" value="${escapeHtml(searchQuery)}" placeholder="${t.searchPlaceholder}" class="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" />
+                        </div>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                        <div class="hero-stat rounded-2xl p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-blue-100/70">${t.statPosts}</p>
+                            <p class="mt-2 text-3xl font-black">${allPosts.length}</p>
+                        </div>
+                        <div class="hero-stat rounded-2xl p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-blue-100/70">${t.statFree}</p>
+                            <p class="mt-2 text-2xl font-black">${t.freeLabel}</p>
+                        </div>
+                        <div class="hero-stat rounded-2xl p-4">
+                            <p class="text-xs uppercase tracking-[0.18em] text-blue-100/70">${t.statFast}</p>
+                            <p class="mt-2 text-2xl font-black">${t.fastLabel}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="board-card glass-panel p-6 rounded-3xl border border-blue-100/60 flex gap-4 items-start">
+                <div class="bg-blue-50 p-3 rounded-2xl text-accent shrink-0"><i data-lucide="info" class="w-6 h-6"></i></div>
+                <div>
+                    <h2 class="font-bold text-primary text-lg mb-2">${t.aboutTitle}</h2>
+                    <p class="text-sm text-slate-600 leading-7">${t.aboutText}<br><span class="text-xs mt-2 inline-block text-slate-400">${t.recruitHint}</span></p>
+                </div>
+            </div>
+            <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center px-1">
+                <div>
+                    <span class="text-base font-bold text-slate-600">${filtered.length}${t.countSuffix}</span>
+                    <p class="text-xs text-slate-400 mt-1">${t.latestLabel}</p>
+                </div>
+                <select id="sort-select" class="text-sm border border-slate-200 bg-white/90 rounded-xl py-2 px-4 shadow-sm">
+                    <option value="newest" ${sortOrder==='newest'?'selected':''}>${t.sortNew}</option>
+                    <option value="oldest" ${sortOrder==='oldest'?'selected':''}>${t.sortOld}</option>
+                </select>
+            </div>
+            <div class="grid gap-5">${cardsHtml || emptySearchState}</div>
+        </div>`;
+}
+
+function attachHomeEvents() {
+    document.getElementById('sort-select')?.addEventListener('change', (e) => {
+        sortOrder = e.target.value;
+        handleRoute();
+    });
+    document.getElementById('search-input')?.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        handleRoute();
+    });
+    document.querySelectorAll('.post-trigger').forEach(trigger => {
+        trigger.onclick = () => {
+            const t = i18n[currentLang];
+            const card = trigger.closest('.post-card');
+            const detail = trigger.nextElementSibling;
+            const icon = trigger.querySelector('.chevron-icon');
+            const label = trigger.querySelector('.toggle-label');
+            const isOpen = !!detail.style.maxHeight;
+            detail.style.maxHeight = isOpen ? null : detail.scrollHeight + 'px';
+            icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            label.textContent = isOpen ? t.more : t.close;
+            card?.classList.toggle('is-open', !isOpen);
+        };
+    });
+}
+
+function escapeHtml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+}
+
+function renderPolicy() {
+    const t = i18n[currentLang];
+    const content = currentLang === 'jp' ? `
+        <h2 class="text-2xl font-bold mb-4">利用ポリシー</h2>
+        <p class="text-sm text-gray-600 mb-8">このサイトは、研究目的の参加者募集を円滑に行うためのプラットフォームです。公序良俗に反する投稿や、虚偽情報の掲載は固く禁じます。</p>
+        <p class="text-sm text-gray-600">本ポリシーの内容は、必要に応じて予告なく変更される場合があります。最新の内容は本ページにてご確認ください。</p>
+        <h3 class="font-bold text-primary border-b pb-2 mb-3">個人情報の取り扱い</h3>
+        <p class="text-sm text-gray-600 mb-6">応募時に提供される情報は、各研究担当者が管理します。当サイトは情報の正確性やトラブルについて一切の責任を負いません。</p>
+    ` : `
+        <h2 class="text-2xl font-bold mb-4">Policy</h2>
+        <p class="text-sm text-gray-600 mb-8">This site is a platform for recruiting research participants. Posts that violate public order or contain false information are strictly prohibited.</p>
+        <h3 class="font-bold text-primary border-b pb-2 mb-3">Privacy</h3>
+        <p class="text-sm text-gray-600 mb-6">Information provided at the time of application is managed by each researcher. This site is not responsible for any disputes.</p>
+        <p class="text-sm text-gray-600">The contents of this policy are subject to change without notice. Please check this page for the latest information.</p>
+    `;
+    return `<div class="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8">${content}<a href="#" onclick="history.back(); return false;" class="text-accent hover:underline text-sm font-medium">${t.back}</a></div>`;
+}
+
+function renderRecruit() {
+    const t = i18n[currentLang];
+    
+    // 1. 共通のヒーローセクション（青いバナー部分）を作成
+    const heroSection = `
+        <div class="bg-gradient-to-r from-accent to-blue-700 rounded-2xl p-8 text-white text-center shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">${t.recruitHero}</h2>
+            <p class="opacity-90 mb-6">${t.recruitSub}</p>
+            <a href="${RECRUIT_FORM_URL}" target="_blank" class="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-full font-bold shadow-md hover:bg-gray-100 transition-transform hover:-translate-y-1">
+                <i data-lucide="external-link" class="w-4 h-4"></i> ${t.recruitBtn}
+            </a>
+        </div>
+    `;
+
+    // 2. 言語ごとの詳細ガイドラインを作成
+    const guideContent = currentLang === 'jp' ? `
+        <section class="space-y-6">
+            <div>
+                <h4 class="font-bold text-accent mb-3 text-base flex items-center gap-2">
+                    <i data-lucide="package" class="w-5 h-5"></i>掲載可能な内容
+                </h4>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2 pl-4">
+                    <li>実験の参加者を**無料**で募集することが可能です。</li>
+                    <li>各研究室の参加者募集のリンク（Sonaシステム、ホームページなど）も掲載可能です。</li>
+                    <li>学生個人の卒業論文や課題のための調査も掲載可能です。</li>
+                </ul>
+            </div>
+            <hr class="border-gray-100">
+            <div>
+                <h4 class="font-bold text-blue-800 mb-3 text-base flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>注意事項
+                </h4>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2 pl-4">
+                    <li>掲載料金などは一切かかりません。</li>
+                    <li>実験・調査内容に**虚偽を含まない**こと。</li>
+                    <li>**謝礼の有無は必ず明記**してください。また謝礼がアマゾンギフト券など**現金以外の場合も明記**してください。</li>
+                </ul>
+            </div>
+            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 font-medium">
+                <p class="font-bold flex items-center gap-2 mb-1 text-yellow-800">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>免責事項
+                </p>
+                当サイトを通じて行われる参加者募集に関連して生じたいかなる問題についても、当サイトは一切の責任を負いません。あらかじめご承知おきください。
+            </div>
+        </section>
+    ` : `
+        <section class="space-y-6">
+            <div>
+                <h4 class="font-bold text-accent mb-3 text-base flex items-center gap-2">
+                    <i data-lucide="package" class="w-5 h-5"></i>What you can post
+                </h4>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2 pl-4">
+                    <li>You can recruit experiment participants for **free**.</li>
+                    <li>Links to lab recruitment systems (Sona, websites, etc.) can also be posted.</li>
+                    <li>Surveys for individual student theses or assignments are also welcome.</li>
+                </ul>
+            </div>
+            <hr class="border-gray-100">
+            <div>
+                <h4 class="font-bold text-blue-800 mb-3 text-base flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>Important Notes
+                </h4>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2 pl-4">
+                    <li>There are no fees for posting.</li>
+                    <li>The experiment/survey must **not contain false information**.</li>
+                    <li>**Reward details must be stated clearly**. If the reward is non-cash (e.g., Amazon gift card), please specify it.</li>
+                </ul>
+            </div>
+            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 font-medium">
+                <p class="font-bold flex items-center gap-2 mb-1 text-yellow-800">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>Disclaimer
+                </p>
+                This site is not responsible for any issues or disputes arising from participation in any research posted here.
+            </div>
+        </section>
+    `;
+
+    // 3. 全体を組み合わせて返す
+    return `
+        <div class="max-w-5xl mx-auto">
+            ${heroSection}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                ${guideContent}
+            </div>
+        </div>
+    `;
+}
+
+function renderContact() {
+    const t = i18n[currentLang];
+    return `
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div class="w-16 h-16 bg-blue-100 text-accent rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="mail" class="w-8 h-8"></i></div>
+        <h2 class="text-2xl font-bold text-primary mb-4">${t.contactTitle}</h2>
+        <p class="text-gray-600 mb-6">${t.contactText}</p>
+        <a href="${CONTACT_FORM_URL}" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-lg font-bold shadow-md hover:bg-blue-700 transition-all">
+            <i data-lucide="send" class="w-5 h-5"></i> ${t.contactBtn}
+        </a>
+    </div>`;
+}
+
+function renderFaq() {
+    const t = i18n[currentLang];
+    // 言語によってFAQデータを出し分け
+    const faqData = currentLang === 'jp' ? [
+        { 
+            q: "学生個人の実験の掲載はできますか？", 
+            a: "はい、掲載可能です。" 
+        },
+        { 
+            q: "掲載を終了するにはどうすればいいですか？", 
+            a: "募集が終了した場合は実験名の前に【募集終了】と表記してください。削除を希望される場合はお問い合わせフォームよりご連絡ください。" 
+        },
+        { 
+            q: "写真や資料を掲載することはできますか？", 
+            a: "掲示板はテキストベースです。資料がある場合は、Googleドライブの共有リンク等を詳細欄に記載することを推奨しています。" 
+        }
+    ] : [
+        { 
+            q: "Can I post an individual student's experiment?", 
+            a: "Yes, you can post it." 
+        },
+        { 
+            q: "How can I end or delete my post?", 
+            a: "Please add 【Closed】 to the title when finished. If you wish to delete it, please contact us via the contact form." 
+        },
+        { 
+            q: "Can I post photos or documents?", 
+            a: "The board is text-based. If you have additional documents, we recommend providing a link (e.g., Google Drive) in the details field." 
+        }
+    ];
+
+    const faqHtml = faqData.map(item => `
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+            <summary class="flex items-center justify-between p-5 cursor-pointer list-none focus:outline-none">
+                <span class="text-sm font-bold text-primary flex items-center gap-3"><span class="w-6 h-6 bg-blue-100 text-accent rounded-full flex items-center justify-center text-xs shrink-0">Q</span>${item.q}</span>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform duration-300 group-open:rotate-180"></i>
+            </summary>
+            <div class="px-5 pb-5 pt-0 text-sm text-gray-600 leading-relaxed border-t border-gray-50 bg-gray-50/50"><div class="flex gap-3 pt-4"><span class="w-6 h-6 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs shrink-0 font-bold">A</span><p>${item.a}</p></div></div>
+        </details>`).join('');
+
+    return `<div class="max-w-5xl mx-auto space-y-6"><div class="text-center mb-8"><h2 class="text-2xl font-bold text-primary mb-2">${t.faq}</h2></div>${faqHtml}</div>`;
+}
