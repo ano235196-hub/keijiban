@@ -1,174 +1,116 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <title>実験参加者募集｜大学研究・心理学実験への参加募集</title>
+    <meta name="description" content="大学の研究・実験・卒業論文への参加者を募集する掲示板です。心理学実験、行動科学、認知研究などの参加者募集情報を掲載しています。" />
 
-  <meta name="google-site-verification" content="61fo7jboEh_yjqDy9wookQE0lFghsk4CQnk5VNTj1m0" />
-  <title>被験者募集掲示板｜大学研究・心理学実験への参加募集</title>
-  <meta name="description" content="大学などの研究・実験への参加者を募集する掲示板です。心理学実験、行動科学、認知研究などの被験者募集情報を掲載しています。研究参加の前にポリシーをご確認ください。" />
-  <meta name="keywords" content="被験者募集, 実験募集, 研究参加, 心理学実験, 行動科学, 大学生バイト, 実験モニター" />
-  <meta property="og:title" content="被験者募集掲示板｜研究・実験参加者募集サイト" />
-  <meta property="og:description" content="大学研究や心理学実験の被験者を募集しています。研究参加前にポリシーをご確認ください。" />
-  <meta property="og:url" content="https://hikennsya.github.io/-/index.html" />
-  <meta property="og:image" content="https://hikennsya.github.io/-/img/img1.png" />
-  <meta property="og:type" content="website" />
-  <meta property="og:locale" content="ja_JP" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="styles.css" />
+    <meta property="og:title" content="実験参加者募集" />
+    <meta property="og:description" content="大学研究や心理学実験の参加者を募集しています。研究参加前にポリシーをご確認ください。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hikennsya.github.io/" />
+    <meta property="og:image" content="https://hikennsya.github.io/-/2.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="実験参加者" />
+    <meta name="twitter:description" content="大学研究や心理学実験の参加者を募集しています。" />
+    <meta name="twitter:image" content="https://hikennsya.github.io/-/2.png" />
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // JSで使用しているカスタムカラーの設定
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e293b', // メイン文字色 (Slate 800)
+                        accent: '#2563eb',  // アクセント色 (Blue 600)
+                    },
+                    fontFamily: {
+                        sans: ['"Helvetica Neue"', 'Arial', '"Hiragino Kaku Gothic ProN"', '"Hiragino Sans"', 'Meiryo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="style.css" />
 </head>
+<body class="board-shell bg-slate-50 text-gray-800 antialiased flex flex-col min-h-screen">
 
-<body>
-  <header class="site-header">
-    <nav class="navbar">
-      <h1 class="logo"><a href="index.html">被験者募集掲示板</a></h1>
-      <ul class="nav-links">
-        <li><a href="index.html">ホーム</a></li>
-        <li><a href="policy.html">ポリシー</a></li>
-        <li><a href="recruit.html">掲載</a></li>
-        <li><a href="contact.html">お問い合わせ</a></li>
-      </ul>
-    </nav>
-  </header>
+    <div class="page-orb page-orb-a" aria-hidden="true"></div>
+    <div class="page-orb page-orb-b" aria-hidden="true"></div>
 
-  <script>
-    // 現在ページを判定してナビを強調
-    const currentPage = window.location.pathname.split("/").pop();
-    document.querySelectorAll(".nav-links a").forEach(link => {
-      if (link.getAttribute("href") === currentPage) {
-        link.classList.add("active");
-      }
-    });
-  </script>
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <a href="#" class="flex items-center gap-2 group">
+                    <div class="bg-primary p-1.5 rounded-lg group-hover:bg-accent transition-colors duration-300">
+                        <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="font-bold text-lg md:text-xl text-primary tracking-tight group-hover:text-accent transition-colors">
+                        実験参加者募集
+                    </span>
+                </a>
 
-  <main class="container">
-    <section class="intro-section">
-      <h2>このサイトについて</h2>
-      <p>
-        このサイト「被験者募集掲示板」は、大学などの研究・実験への参加者を募集する目的で運営されています。<br>
-        研究参加の際はポリシーをご確認ください。
-      </p>
-      <p class="official-links">
-        <a href="https://x.com/hikennsya_keiji" target="_blank">X</a> ｜ 
-        <a href="https://www.threads.net/@hikennsya_keijiban" target="_blank">Threads</a>
-      </p>
-    </section>
+                <nav class="hidden md:flex space-x-1" id="desktop-nav">
+                    </nav>
 
-    <section id="posts" class="post-list">
-      <div id="loading" class="loading">投稿を読み込んでいます...</div>
-      <div id="error" class="error" style="display:none;">投稿データを読み込めませんでした。</div>
-    </section>
-  </main>
-
-  <footer class="footer">© 被験者募集掲示板</footer>
-
-  <!-- ✅ Google Apps Script (GAS) 連携 -->
-<script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx8-gJmybTVuwq787ZQ63oneyrnNQeThXP6ef-Mr3TC5qta62Vjl1wo2u2a3onL7Hrf4w/exec";
-const postsContainer = document.getElementById('posts');
-const loading = document.getElementById('loading');
-const error = document.getElementById('error');
-
-// 投稿一覧取得
-async function loadPosts() {
-  try {
-    const res = await fetch(GAS_URL);
-    const rows = await res.json();
-    loading.style.display = 'none';
-    postsContainer.innerHTML = '';
-
-    if (!rows.length) {
-      postsContainer.innerHTML = '<p>現在、募集中の実験はありません。</p>';
-      return;
-    }
-
-    rows.reverse().forEach((item, index) => {
-      const postDiv = document.createElement('div');
-      postDiv.className = 'post card';
-      const likedKey = `liked_${item.id}`;
-      const liked = localStorage.getItem(likedKey);
-
-      postDiv.innerHTML = `
-        <div class="post-header">
-          <span class="post-number">#${rows.length - index}</span>
-          <span class="post-timestamp">${item.timestamp}</span>
-          <h2>${item.title}</h2>
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-accent focus:outline-none">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="post-detail" style="display:none;">
-          <p>${item.detail.replace(/\r?\n/g,'<br>')}</p>
+
+        <div id="mobile-nav" class="hidden md:hidden border-t border-gray-100 bg-white absolute w-full shadow-lg z-40">
+            <div class="px-4 pt-2 pb-4 space-y-1" id="mobile-nav-links">
+                </div>
         </div>
-        <button class="toggle-btn">▼ 詳細を表示</button>
-        <div class="like-area" style="margin-top:10px;">
-          <button class="like-btn" data-id="${item.id}">
-            👍 いいね (<span class="like-count">${item.likes}</span>)
-          </button>
-          <span class="like-msg" style="margin-left:8px;color:red;"></span>
+    </header>
+
+    <main id="main-content" class="relative flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+        
+        <div class="flex flex-col items-center justify-center py-20 text-gray-400">
+            <div class="animate-spin mb-4">
+                <i data-lucide="loader-2" class="w-10 h-10 text-accent"></i>
+            </div>
+            <p class="text-sm font-medium">読み込み中...</p>
         </div>
-      `;
 
-      // 詳細開閉
-      const toggleBtn = postDiv.querySelector('.toggle-btn');
-      const detail = postDiv.querySelector('.post-detail');
-      toggleBtn.addEventListener('click', () => {
-        const isVisible = detail.style.display === 'block';
-        detail.style.display = isVisible ? 'none' : 'block';
-        toggleBtn.textContent = isVisible ? '▼ 詳細を表示' : '▲ 閉じる';
-      });
+    </main>
 
-      // いいねボタン
-      const likeBtn = postDiv.querySelector('.like-btn');
-      const likeCountEl = postDiv.querySelector('.like-count');
-      const likeMsgEl = postDiv.querySelector('.like-msg');
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-center md:text-left">
+                    <p class="text-sm text-gray-500">
+                        &copy; <span id="year"></span> 実験参加者募集. All rights reserved.
+                    </p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="https://x.com/hikennsya_keiji" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-900 transition-colors">
+                        <span class="sr-only">X (Twitter)</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                        </svg>
+                    </a>
+                    <a href="https://www.threads.net/@hikennsya_keijiban" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-900 transition-colors">
+                        <span class="sr-only">Threads</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M11.996 0c-6.628 0-12 5.373-12 12s5.372 12 12 12 12-5.373 12-12-5.372-12-12-12zm6.265 8.92c-.106 2.046-1.123 4.887-4.793 4.887-1.748 0-2.887-1.173-2.887-2.909 0-1.724 1.15-2.91 2.946-2.91 1.625 0 2.455 1.056 2.455 1.056s.28-1.576-2.618-1.576c-3.136 0-5.385 2.276-5.385 5.564 0 3.235 2.213 5.617 5.467 5.617 2.164 0 3.738-1.018 4.417-1.879l-1.357-1.423c-.39.544-1.636 1.458-3.085 1.458-1.892 0-3.23-1.272-3.328-3.41h6.914c.05-.286.076-.583.076-.893 0-1.78-.962-3.615-3.026-3.615-2.074 0-3.324 1.848-3.324 3.78 0 1.905 1.258 3.784 3.633 3.784 1.705 0 2.827-1.034 2.827-1.034l1.357 1.455c-.596.713-2.106 1.954-4.237 1.954-4.043 0-6.853-2.924-6.853-6.936 0-3.958 2.766-6.932 6.818-6.932 4.093 0 5.756 3.12 5.756 3.12l-1.416 1.176zm-6.289 2.56c-.957 0-1.55.705-1.55 1.554 0 .802.583 1.537 1.55 1.537.98 0 1.564-.755 1.564-1.555 0-.848-.596-1.535-1.564-1.535z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-      if(liked) likeBtn.disabled = true;
-
-      likeBtn.addEventListener('click', async () => {
-        if(localStorage.getItem(likedKey)) {
-          likeMsgEl.textContent = "すでに押しています";
-          return;
-        }
-
-        likeBtn.disabled = true;
-        likeMsgEl.textContent = "";
-
-        try {
-          const res = await fetch(`${GAS_URL}?id=${item.id}`, { method: "POST" });
-          const data = await res.json();
-          likeCountEl.textContent = data.count;
-          localStorage.setItem(likedKey,"true");
-        } catch(e){
-          console.error("いいねエラー", e);
-          likeBtn.disabled = false;
-        }
-      });
-
-      postsContainer.appendChild(postDiv);
-    });
-
-  } catch(err) {
-    console.error("読み込みエラー", err);
-    loading.style.display = 'none';
-    error.style.display = 'block';
-  }
-}
-
-// 初回読み込み
-loadPosts();
-
-// リアルタイム更新（30秒ごと）
-setInterval(async () => {
-  try {
-    const res = await fetch(GAS_URL);
-    const rows = await res.json();
-    rows.forEach(item => {
-      const likeCountEl = document.querySelector(`.like-btn[data-id="${item.id}"] .like-count`);
-      if(likeCountEl) likeCountEl.textContent = item.likes;
-    });
-  } catch(e) {
-    console.warn("リアルタイム更新エラー", e);
-  }
-}, 30000);
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
